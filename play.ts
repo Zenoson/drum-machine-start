@@ -7,14 +7,17 @@ const lastSoundName = document.querySelector("#last-sound-name") as HTMLElement;
 // Make the audio element with the matching data-sound attribute play.
 // Also, update the lastSoundName to display the name of the sound.
 function playSound(sound : string): void {
-  throw new Error("Not implemented"); //remove me    
+  let audElm : HTMLAudioElement = document.querySelector(`audio[data-sound='${sound.toLowerCase()}']`) as HTMLAudioElement;
+  audElm.currentTime = 0;
+  audElm.play();
+  lastSoundName.textContent = sound;
 }
 
 // TEST: Step 1b - Confirm your playSound function works by clicking the h1.
 // You may remove this testing code after confirming playSound works.
-lastSoundName.addEventListener("click", (event : MouseEvent) => {
-  playSound(prompt("Test the playSound function by entering a sound name:") as string);
-});
+// lastSoundName.addEventListener("click", (event : MouseEvent) => {
+//   playSound(prompt("Test the playSound function by entering a sound name:") as string);
+// });
 
 
 // TODO: Step 2a - Set up a listener for the "keydown" event. 
@@ -23,12 +26,55 @@ lastSoundName.addEventListener("click", (event : MouseEvent) => {
 // Then play the appropriate sound, based on its data-sound attribute.
 // Ignore repeated key presses from held-down keys.
 
+document.addEventListener("keydown", (event : KeyboardEvent) => {
+  if (event.repeat)
+    return;
+
+
+  if (event.key == "/")
+    historyList.classList.toggle("hidden");
+  
+  else if (event.key == "r"){
+    document.querySelectorAll<HTMLLIElement>(".history").forEach(
+      (elem : HTMLElement) => {
+        elem.remove();  
+      }
+    )
+  }
+
+  let drumElm = document.querySelector(`.drum[data-key='${event.key}']`) as HTMLElement || null;
+
+  if (!drumElm) {
+    return;
+  }
+
+  drumElm.classList.add("playing");
+  if (drumElm.dataset.sound === null)
+    return;
+  
+    
+  playSound(String(drumElm.dataset.sound))
+  addToHistory(drumElm)
+
+
+})
 
 
 
 // TODO: Step 2b - Set up a listener for the "keyup" event. 
 // Based on the key pressed, remove the "playing" class 
-// from the .drum element with matching data-key attribute.
+// from the .drum element with matcyhing data-key attribute.
+document.addEventListener("keyup", (event : KeyboardEvent) => {
+  if (event.repeat)
+    return;
+
+  let playingElm = document.querySelector(`.drum[data-key='${event.key}']`) as HTMLElement || null;
+
+  if (!playingElm)
+    return;
+  playingElm.classList.remove("playing")
+
+})
 
 
 
@@ -37,18 +83,29 @@ lastSoundName.addEventListener("click", (event : MouseEvent) => {
 // 'mousedown' events  on the .drum elements. Play the sound according 
 // to the  data-sound attribute of clicked element.
 function handleClickDrum(event : MouseEvent): void {
-  throw new Error("Not implemented"); //remove me    
+  let drumClicked = event.currentTarget as HTMLElement 
+
+  playSound(String(drumClicked.dataset.sound))
+
+  lastSoundName.textContent = drumClicked.dataset.sound;
+  addToHistory(drumClicked)
 }
 
 // TEST: Step 3b - Confirm your playSound method is working via the
 // following click listener that is attach to the first .drum element.
 // **Remove this testing code after confirming playSound works.**
-const oneDrum = document.querySelector(".drum") as HTMLElement;
-oneDrum.addEventListener("mousedown", handleClickDrum);
+// const oneDrum = document.querySelector(".drum") as HTMLElement;
+// oneDrum.addEventListener("mousedown", handleClickDrum);
 
 // TODO: Step 4 - Register handleClickDrum as the mousedown event listener
 // for ALL .drum elements. Use the document.querySelectorAll() and .forEach() methods
 // to do so with no repetitious code
+
+document.querySelectorAll<HTMLElement>(".drum").forEach(
+  (elem : HTMLElement) => {
+      elem.addEventListener("click", handleClickDrum);
+  }
+);
 
 // TODO: Step 5a - Implement addToHistory below.
 // Add a new <li> element to the historyList
@@ -57,8 +114,15 @@ oneDrum.addEventListener("mousedown", handleClickDrum);
 // Each <li> element should also have an anonymous click handler that plays 
 // the drum's matching sound.
 function addToHistory(drum : HTMLElement): void {
-    throw new Error("Not implemented"); //remove me    
-}
+  let liElm : HTMLLIElement = document.createElement("li");
+
+  liElm.textContent = String(drum.dataset.key);
+  historyList.appendChild(liElm);
+
+  liElm.addEventListener("click", (event : MouseEvent) => {
+    playSound(drum.dataset.sound);  
+  });
+};
 
 // TODO: Step 5b - Add calls to addToHistory in both the 
 // 'keydown' listener and handleClickDrum
